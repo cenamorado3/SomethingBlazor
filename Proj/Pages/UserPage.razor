@@ -1,0 +1,119 @@
+﻿@page "/GetUser"
+@using Microsoft.AspNetCore.SignalR.Client
+@inject NavigationManager navMan
+
+@if (!_loading)
+{
+    <div class="card p-3 d-flex">
+        <div class="container m-4">
+
+
+            <div class="row-cols-lg-3">
+                <label>
+                    <div class="text-center">User Name</div>
+                    <input type="text" disabled="true" class="col-12" placeholder="None" @bind-value="_user.UserName"/>
+                </label>
+
+                <label>
+                    <div class="text-center">Name</div>
+                    <input type="text" disabled="true" class="col-12" placeholder="None" @bind-value="_user.Name"/>
+                </label>
+            </div>
+
+
+            <h2 class=mt-4>Address</h2>
+            <div class="address-area p-3">
+                <div class="row-cols-lg-3 mt-4">
+                    <label>
+                        <div class="text-center">Street 1</div>
+                        <input type="text" disabled="true" class="col-12" placeholder="None" @bind-value="_user.Address.Street1"/>
+                    </label>
+
+                    <label>
+                        <div class="text-center">Street 2</div>
+                    <input type="text" disabled="true" class="col-12" placeholder="None" @bind-value="_user.Address.Street2"/>
+                    </label>
+                </div>
+
+
+                <div class="row-cols-lg-4 mt-4">
+                    <label>
+                        <div class="text-center">City</div>
+                    <input type="text" disabled="true" class="col-12" placeholder="None" @bind-value="_user.Address.City"/>
+                    </label>
+
+                    <label>
+                        <div class="text-center">State</div>
+                    <input type="text" disabled="true" class="col-12" placeholder="None" @bind-value="_user.Address.State"/>
+                    </label>
+
+                    <label>
+                        <div class="text-center">Zip Code</div>
+                    <input type="text" disabled="true" class="col-12" placeholder="None" @bind-value="_user.Address.ZipCode"/>
+                    </label>
+                </div>
+            </div>
+
+            <div class="row mt-4">
+                <button type="button" class="btn btn-primary col-2 m-auto" @onclick=GetNewRandomUser>New Random User</button>
+            </div>
+
+        </div>
+    </div>
+
+
+    <p>Raw Payload</p>
+    <p>@System.Text.Json.JsonSerializer.Serialize(_user)</p>
+}
+<style>
+    .card{
+        background-color: #dee5e9;
+        height:100%;
+    }
+    .address-area{
+        border:2px solid #4d4d4d;
+    }
+</style>
+
+@code
+{
+    private bool _loading = true;
+    private User? _user;
+    private HubConnection? hubConnection;
+    public bool IsConnected =>
+        hubConnection?.State == HubConnectionState.Connected;
+
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.DisposeAsync();
+        }
+    }
+    
+    protected async override void OnInitialized()
+    {
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl(navMan.ToAbsoluteUri("/userhub"))
+            .Build();
+
+        hubConnection.On<User>("RecieveUser", (user) =>
+        {
+            _user = user;
+            StateHasChanged();
+        });
+
+        await hubConnection.StartAsync();
+        await GetNewRandomUser();
+        _loading = false;
+    }
+
+    private async Task GetNewRandomUser()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.SendAsync("SendUser");
+        }
+    }
+}
+    
