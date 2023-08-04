@@ -1,1 +1,1 @@
-Simple example of Blazor that be be written in a couple hours
+Simple example of Blazor that was written in a couple hours
